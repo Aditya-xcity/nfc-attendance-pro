@@ -1,5 +1,5 @@
 # database/__init__.py
-from .manager import DatabaseManager
+from .manager import ExcelDatabaseManager
 
 # Global database instance
-db = DatabaseManager()
+db = ExcelDatabaseManager()

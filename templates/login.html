@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 Tap & Track Pro - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">🎨</div>
+                <h1>Tap & Track Pro</h1>
+                <p>NFC Attendance Management System</p>
+            </div>
+            
+            <form method="POST" class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                {% if error %}
+                    <div class="error-message">
+                        ❌ {{ error }}
+                    </div>
+                {% endif %}
+                
+                <button type="submit" class="login-btn">
+                    🚀 Login to Dashboard
+                </button>
+            </form>
+            
+            <div class="login-footer">
+                <p>Default credentials: admin / admin123</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="background-animation">
+        <div class="floating-card"></div>
+        <div class="floating-card"></div>
+        <div class="floating-card"></div>
+    </div>
+</body>
+</html>

@@ -8,11 +8,16 @@ class SessionManager:
         self.stop_flag = False
         self.scanned_uids = set()
 
-    def start_session(self, name, duration_minutes=60):
+    def start_session(self, name, duration_minutes=60, **kwargs):
         self.current_session = {
             'name': name,
             'start_time': datetime.utcnow() + Config.TIMEZONE_OFFSET,
-            'duration': duration_minutes
+            'duration': duration_minutes,
+            # Optional class context
+            'subject': kwargs.get('subject'),
+            'section': kwargs.get('section'),
+            'class_start': kwargs.get('class_start'),
+            'class_end': kwargs.get('class_end'),
         }
         self.stop_flag = False
         self.scanned_uids.clear()

@@ -4,7 +4,6 @@ from datetime import timedelta
 class Config:
     NFC_READ_DELAY = 0.5
     TIMEZONE_OFFSET = timedelta(hours=5, minutes=30)
-    DB_FILE = "attendance.db"
     
     # Modern Color Scheme
     GUI_BG = "#0f0f23"  # Dark blue-black

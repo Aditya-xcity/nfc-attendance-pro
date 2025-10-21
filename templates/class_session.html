@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Class Session</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body{background:#0f0f23;color:#fff;font-family:Segoe UI,Arial,sans-serif}
+    .container{max-width:1200px;margin:0 auto;padding:20px}
+    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .title{font-size:20px;color:#00d4ff;font-weight:700}
+    .form{display:flex;gap:10px;flex-wrap:wrap;background:#1a1a2e;padding:12px;border:1px solid #333355;border-radius:10px}
+    .form input,.form select{background:#2a2a4a;border:1px solid #333355;color:#fff;border-radius:8px;padding:8px}
+    .btn{padding:10px 14px;border:none;border-radius:8px;font-weight:700;cursor:pointer}
+    .btn.primary{background:#00ff88;color:#0f0f23}
+    .btn.warn{background:#ffaa00;color:#0f0f23}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+    .panel{background:#1a1a2e;border:1px solid #333355;border-radius:10px;min-height:520px;display:flex;flex-direction:column}
+    .panel h3{margin:0;padding:12px 14px;border-bottom:1px solid #333355;color:#00d4ff;font-size:14px}
+    .list{flex:1;overflow:auto;padding:10px}
+    .list .item{display:flex;justify-content:space-between;align-items:center;background:#0f0f23;border:1px solid #333355;border-radius:8px;margin-bottom:8px;padding:10px}
+    .muted{color:#b0b0b0;font-size:12px}
+    .big-now{font-size:22px;font-weight:800;color:#00ff88}
+    .stats{display:flex;gap:10px}
+    .stat{background:#1a1a2e;border:1px solid #333355;border-radius:8px;padding:8px 12px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">Live Class Session</div>
+      <div class="stats">
+        <div class="stat">Total: <span id="statTotal">0</span></div>
+        <div class="stat">Present: <span id="statPresent">0</span></div>
+        <div class="stat">Absent: <span id="statAbsent">0</span></div>
+      </div>
+    </div>
+
+    <div id="setupBox" class="form">
+      <input id="inpSubject" placeholder="Subject (e.g., Physics)" />
+      <select id="inpSection"></select>
+      <input id="inpStart" type="time" />
+      <input id="inpEnd" type="time" />
+      <button class="btn primary" onclick="startClassSession()">Start Session</button>
+      <a class="btn" href="/students" target="_blank" style="background:#00d4ff;color:#0f0f23;text-decoration:none">Add Student</a>
+    </div>
+
+    <div id="sessionBox" class="form" style="display:none;gap:10px">
+      <span id="sessionInfo" style="flex:1;align-self:center;color:#00d4ff;font-weight:700"></span>
+      <button class="btn warn" onclick="resetSession()" style="background:#ffaa00;color:#0f0f23">Reset Session</button>
+      <button class="btn warn" onclick="stopSession()" style="background:#ff6666;color:#fff">Stop Session & Export PDF</button>
+    </div>
+
+    <div id="sessionMeta" class="muted" style="display:none;margin-top:8px"></div>
+
+    <div id="statusBox" class="form" style="display:none;gap:10px;background:#1a2a2e;border-color:#00ff88;margin-top:8px">
+      <div style="flex:1;display:flex;align-items:center;gap:10px">
+        <div style="width:12px;height:12px;background:#00ff88;border-radius:50%;animation:pulse 1s infinite"></div>
+        <span id="statusText" style="color:#00ff88;font-weight:700">Session running...</span>
+      </div>
+    </div>
+
+    <style>
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    </style>
+
+    <div class="grid">
+      <div class="panel">
+        <h3>Waiting (Absent)</h3>
+        <div id="waitingList" class="list"></div>
+      </div>
+      <div class="panel">
+        <h3>Present (Live)</h3>
+        <div style="padding:10px">
+          <div class="muted">Last scan:</div>
+          <div id="lastScan" class="big-now">—</div>
+        </div>
+        <div id="presentList" class="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/class_session.js') }}?v=2"></script>
+</body>
+</html>

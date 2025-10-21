@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Student</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body{background:#0f0f23;color:#fff;font-family:Segoe UI,Arial,sans-serif}
+    .box{max-width:720px;margin:30px auto;background:#1a1a2e;border:1px solid #333355;border-radius:12px;padding:18px}
+    .row{display:flex;gap:10px;margin-bottom:10px}
+    input,select{flex:1;background:#2a2a4a;border:1px solid #333355;color:#fff;border-radius:8px;padding:10px}
+    .btn{padding:10px 14px;border:none;border-radius:8px;font-weight:700;cursor:pointer}
+    .btn.primary{background:#00ff88;color:#0f0f23}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2 style="margin:0 0 12px;color:#00d4ff">Add New Student</h2>
+    <div class="row">
+      <input id="name" placeholder="Full Name*" />
+    </div>
+    <div class="row">
+      <input id="enroll" placeholder="Enrollment No" />
+      <input id="roll" placeholder="Roll No" />
+    </div>
+    <div class="row">
+      <input id="subject" placeholder="Subject" />
+      <select id="section"></select>
+    </div>
+    <div class="row">
+      <input id="uid" placeholder="NFC UID (e.g., 2297951A)" />
+      <button class="btn" style="background:#00d4ff;color:#0f0f23" onclick="scanUID()" type="button">Scan Card</button>
+    </div>
+    <div class="row">
+      <button class="btn primary" onclick="submitStudent()">Save</button>
+    </div>
+    <div id="msg" style="margin-top:8px;color:#b0b0b0"></div>
+  </div>
+
+  <script>
+    async function loadSections(){
+      const res = await fetch('/api/available_sections');
+      const data = await res.json();
+      const sel = document.getElementById('section');
+      sel.innerHTML = '';
+      (data.sections || ['A2','B2','C2','D2']).forEach(sec=>{
+        const opt=document.createElement('option');
+        opt.value=sec; opt.textContent=sec; sel.appendChild(opt);
+      });
+    }
+
+    async function scanUID(){
+      const msg = document.getElementById('msg');
+      msg.textContent = 'Waiting for card...';
+      try{
+        const res = await fetch('/api/scan_uid');
+        const out = await res.json();
+        if(out.success){
+          document.getElementById('uid').value = out.uid;
+          msg.textContent = `Scanned UID: ${out.uid}`;
+        }else{
+          msg.textContent = out.message || 'No card detected';
+        }
+      }catch(e){ msg.textContent = 'Scan error'; }
+    }
+
+    async function submitStudent(){
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        enroll_no: document.getElementById('enroll').value.trim(),
+        roll_no: document.getElementById('roll').value.trim(),
+        subject: document.getElementById('subject').value.trim(),
+        section: document.getElementById('section').value,
+        uid: document.getElementById('uid').value.trim().toUpperCase()
+      };
+      if(!payload.name || !payload.uid){
+        document.getElementById('msg').textContent='Name and UID are required';
+        return;
+      }
+      const res = await fetch('/api/add_student',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const out = await res.json();
+      if(out.success){
+        document.getElementById('msg').textContent = 'Student added successfully';
+      }else{
+        document.getElementById('msg').textContent = out.message || 'Failed to add student';
+      }
+    }
+
+    loadSections();
+  </script>
+</body>
+</html>
