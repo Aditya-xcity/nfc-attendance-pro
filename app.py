@@ -151,14 +151,24 @@ def delete_report():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        nfc_uid = request.form.get('nfc_uid', '').strip()  # Optional NFC login
         
-        if db.authenticate_admin(username, password):
+        print(f"[LOGIN] Received - username: '{username}', password: {'***' if password else ''}, nfc_uid: '{nfc_uid}'")
+        
+        # Try authentication
+        success, admin_name = db.authenticate_admin(username, password, nfc_uid)
+        
+        print(f"[LOGIN] Authentication result: success={success}, admin_name={admin_name}")
+        
+        if success:
             session['authenticated'] = True
-            session['username'] = username
+            session['username'] = admin_name
+            print(f"[LOGIN] Login successful for {admin_name}")
             return redirect(url_for('dashboard'))
         else:
+            print(f"[LOGIN] Login failed")
             return render_template('login.html', error='Invalid credentials')
     
     return render_template('login.html')

@@ -349,9 +349,16 @@
                 const data = await res.json();
 
                 if (data.success) {
+                    // Play tick sound
+                    if (typeof soundManager !== 'undefined') {
+                        soundManager.playTickSound();
+                    }
                     // Open PDF in new tab
                     window.open(`/static/reports/${filename}`, '_blank');
                 } else {
+                    if (typeof soundManager !== 'undefined') {
+                        soundManager.playErrorSound();
+                    }
                     alert('Error: ' + (data.message || 'Failed to open report'));
                 }
             } catch (e) {
@@ -374,9 +381,16 @@
                 const data = await res.json();
 
                 if (data.success) {
+                    // Play delete sound
+                    if (typeof soundManager !== 'undefined') {
+                        soundManager.playDeleteSound();
+                    }
                     alert('Report deleted successfully!');
                     loadReports(); // Reload the list
                 } else {
+                    if (typeof soundManager !== 'undefined') {
+                        soundManager.playErrorSound();
+                    }
                     alert('Error: ' + (data.message || 'Failed to delete report'));
                 }
             } catch (e) {
@@ -407,5 +421,8 @@
         // Load reports on page load
         window.addEventListener('DOMContentLoaded', loadReports);
     </script>
+    
+    <!-- Sound effects -->
+    <script src="{{ url_for('static', filename='js/sounds.js') }}"></script>
 </body>
 </html>

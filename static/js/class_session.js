@@ -95,6 +95,12 @@ async function refreshLists() {
       // Only capture if this is a NEW student (prevent duplicate captures)
       if (lastScannedName !== window.lastCapturedStudent) {
         window.lastCapturedStudent = lastScannedName;
+        
+        // Play scan success sound
+        if (typeof soundManager !== 'undefined') {
+          soundManager.playScanSuccess();
+        }
+        
         capturePhotoWithCountdown(lastScannedName);
       }
     }
@@ -165,6 +171,11 @@ function handleDragStart(e) {
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/html', this.innerHTML);
   this.style.opacity = '0.5';
+  
+  // Play drag sound
+  if (typeof soundManager !== 'undefined') {
+    soundManager.playTickSound();
+  }
 }
 
 function handleDragEnd(e) {
@@ -225,6 +236,15 @@ async function handleDrop(e) {
     const data = await res.json();
     
     if (data.success) {
+      // Play appropriate sound
+      if (typeof soundManager !== 'undefined') {
+        if (isLeftToRight) {
+          soundManager.playDragSound(); // Success drag sound
+        } else {
+          soundManager.playDeleteSound(); // Delete sound for removal
+        }
+      }
+      
       // Refresh lists immediately
       await refreshLists();
       
@@ -232,6 +252,10 @@ async function handleDrop(e) {
       const action = isLeftToRight ? 'marked as present' : 'removed from attendance';
       console.log(`${name} ${action}`);
     } else {
+      // Play error sound
+      if (typeof soundManager !== 'undefined') {
+        soundManager.playErrorSound();
+      }
       alert('Error: ' + (data.message || 'Operation failed'));
     }
   } catch (e) {
@@ -418,6 +442,15 @@ async function capturePhotoWithCountdown(studentName) {
     const count = countdownValues[i];
     updateCameraStatus(count, false);
     photoInfo.innerHTML = `<div style="font-size:48px;font-weight:bold;color:#00ff88">${count}</div>`;
+    
+    // Play countdown sound
+    if (typeof soundManager !== 'undefined') {
+      if (i < countdownValues.length - 1) {
+        soundManager.playCountdownBeep(); // Regular beep
+      } else {
+        soundManager.playCountdownFinal(); // Final "Smile!" sound
+      }
+    }
     
     // Wait 1 second between counts
     await new Promise(resolve => setTimeout(resolve, 1000));

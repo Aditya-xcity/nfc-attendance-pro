@@ -10,6 +10,7 @@ class ExcelDatabaseManager:
         self.lock = Lock()
         self.students_file = "data/students.xlsx"
         self.attendance_file = "data/attendance.xlsx"
+        self.admins_file = "data/admins.xlsx"
         self.ensure_files_exist()
 
     def ensure_files_exist(self):
@@ -27,6 +28,16 @@ class ExcelDatabaseManager:
             df = pd.DataFrame(columns=['Student UID', 'Date', 'Time', 'Timestamp'])
             df.to_excel(self.attendance_file, index=False, sheet_name='Attendance')
             print(f"[DEBUG] Created {self.attendance_file}")
+        
+        # Create admins file
+        if not os.path.exists(self.admins_file):
+            df = pd.DataFrame([
+                {'Name': 'admin', 'Password': 'admin123', 'NFCCard': 'not_required'},
+                {'Name': 'hod', 'Password': 'hod123', 'NFCCard': '893002029932'},
+                {'Name': 'class', 'Password': 'class123', 'NFCCard': 'not_required'}
+            ])
+            df.to_excel(self.admins_file, index=False, sheet_name='Admins')
+            print(f"[DEBUG] Created {self.admins_file}")
 
     def get_student_by_uid(self, uid):
         """Get student by NFC UID"""
@@ -128,10 +139,46 @@ class ExcelDatabaseManager:
                 print(f"[DEBUG] Error in get_today_stats: {e}")
                 return 0, 0
 
-    def authenticate_admin(self, username, password):
-        """Authenticate admin (hardcoded for now)"""
-        # In a real app, store this in a separate file or use environment variables
-        return username == "admin" and password == "admin123"
+    def authenticate_admin(self, username, password, nfc_uid=None):
+        """Authenticate admin from Excel file"""
+        with self.lock:
+            try:
+                df = pd.read_excel(self.admins_file, dtype=str)
+                df = df.fillna('')
+                
+                print(f"[DEBUG] Authenticating - username: {username}, password: {'***' if password else None}, nfc_uid: {nfc_uid}")
+                
+                for _, row in df.iterrows():
+                    admin_name = str(row.get('Name', '')).strip().lower()
+                    admin_pass = str(row.get('Password', '')).strip()
+                    admin_nfc = str(row.get('NFCCard', '')).strip().upper()
+                    
+                    print(f"[DEBUG] Checking admin: {admin_name}, nfc: {admin_nfc}")
+                    
+                    # Check username/password authentication
+                    if username and password:
+                        if admin_name == username.lower() and admin_pass == password:
+                            print(f"[DEBUG] Username/password match for {admin_name}")
+                            return True, admin_name
+                    
+                    # Check NFC card authentication
+                    if nfc_uid:
+                        nfc_uid_clean = str(nfc_uid).strip().upper()
+                        print(f"[DEBUG] Comparing NFC: '{admin_nfc}' vs '{nfc_uid_clean}'")
+                        if admin_nfc and admin_nfc != 'NOT_REQUIRED' and admin_nfc == nfc_uid_clean:
+                            print(f"[DEBUG] NFC match for {admin_name}")
+                            return True, admin_name
+                
+                print(f"[DEBUG] No authentication match found")
+                return False, None
+            except Exception as e:
+                print(f"[DEBUG] Error in authenticate_admin: {e}")
+                import traceback
+                traceback.print_exc()
+                # Fallback to default admin
+                if username == "admin" and password == "admin123":
+                    return True, "admin"
+                return False, None
 
     def get_recent_attendance(self, limit=10):
         """Get recent attendance records"""
