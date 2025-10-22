@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students List - NFC Attendance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27, #162447);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px;
+            background: rgba(15, 15, 35, 0.85);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .header h1 {
+            font-size: 42px;
+            color: #00ff88;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+
+        .header .subtitle {
+            color: #888;
+            font-size: 16px;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 12px 24px;
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+            border: 2px solid #00d4ff;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            z-index: 100;
+        }
+
+        .back-btn:hover {
+            background: #00d4ff;
+            color: #0a0e27;
+            transform: translateX(-5px);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section-tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 30px;
+            background: rgba(15, 15, 35, 0.85);
+            border: 2px solid rgba(0, 255, 136, 0.2);
+            border-radius: 25px;
+            color: #888;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .tab-btn.active {
+            background: #00ff88;
+            color: #0a0e27;
+            border-color: #00ff88;
+        }
+
+        .stats-bar {
+            background: rgba(15, 15, 35, 0.85);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid rgba(0, 255, 136, 0.2);
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #00ff88;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .search-section {
+            background: rgba(15, 15, 35, 0.85);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .search-section input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .search-section input::placeholder {
+            color: #666;
+        }
+
+        .students-table {
+            background: rgba(15, 15, 35, 0.85);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid rgba(0, 255, 136, 0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #00ff88;
+            border-bottom: 2px solid rgba(0, 255, 136, 0.2);
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        tr:hover {
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .no-students {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+        }
+
+        .no-students-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            font-size: 18px;
+        }
+
+        .uid-badge {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+            
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-btn">← Back to Menu</a>
+
+    <div class="header">
+        <h1>👥 Students Database</h1>
+        <div class="subtitle">View all students by section</div>
+    </div>
+
+    <div class="container">
+        <!-- Section Tabs -->
+        <div class="section-tabs">
+            <button class="tab-btn active" onclick="loadSection('A2')">Section A2</button>
+            <button class="tab-btn" onclick="loadSection('B2')">Section B2</button>
+            <button class="tab-btn" onclick="loadSection('C2')">Section C2</button>
+            <button class="tab-btn" onclick="loadSection('D2')">Section D2</button>
+            <button class="tab-btn" onclick="loadSection('ALL')">All Sections</button>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="totalStudents">0</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="currentSection">A2</div>
+                <div class="stat-label">Current Section</div>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-section">
+            <input type="text" id="searchInput" placeholder="🔍 Search by name, enrollment, roll number, or UID..." onkeyup="filterStudents()">
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading">
+            Loading students...
+        </div>
+
+        <!-- Students Table -->
+        <div id="studentsTable" class="students-table" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Enrollment No</th>
+                        <th>Roll No</th>
+                        <th>Section</th>
+                        <th>Subject</th>
+                        <th>NFC UID</th>
+                    </tr>
+                </thead>
+                <tbody id="studentsBody">
+                    <!-- Students will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- No Students State -->
+        <div id="noStudents" class="no-students" style="display: none;">
+            <div class="no-students-icon">👤</div>
+            <h2>No Students Found</h2>
+            <p style="margin-top: 10px;">Add students to see them here!</p>
+        </div>
+    </div>
+
+    <script>
+        let allStudents = [];
+        let currentSection = 'A2';
+
+        async function loadSection(section) {
+            currentSection = section;
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update UI
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('studentsTable').style.display = 'none';
+            document.getElementById('noStudents').style.display = 'none';
+            document.getElementById('currentSection').textContent = section;
+
+            try {
+                const url = section === 'ALL' 
+                    ? '/api/all_students' 
+                    : `/api/section_students?section=${section}`;
+                
+                const res = await fetch(url);
+                const data = await res.json();
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (!data.success || !data.students || data.students.length === 0) {
+                    document.getElementById('noStudents').style.display = 'block';
+                    document.getElementById('totalStudents').textContent = '0';
+                    return;
+                }
+
+                allStudents = data.students;
+                document.getElementById('totalStudents').textContent = data.students.length;
+                
+                displayStudents(allStudents);
+                document.getElementById('studentsTable').style.display = 'block';
+
+            } catch (e) {
+                console.error('Error loading students:', e);
+                document.getElementById('loading').innerHTML = '<p style="color:#ff6666">Error loading students: ' + e.message + '</p>';
+            }
+        }
+
+        function displayStudents(students) {
+            const tbody = document.getElementById('studentsBody');
+            tbody.innerHTML = '';
+
+            students.forEach((student, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td style="font-weight: 600; color: #00d4ff">${student.name || 'N/A'}</td>
+                    <td>${student.enroll_no || 'N/A'}</td>
+                    <td>${student.roll_no || 'N/A'}</td>
+                    <td>${student.section || 'N/A'}</td>
+                    <td>${student.subject || 'N/A'}</td>
+                    <td><span class="uid-badge">${student.uid || 'N/A'}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterStudents() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (!searchTerm) {
+                displayStudents(allStudents);
+                return;
+            }
+
+            const filtered = allStudents.filter(student => 
+                (student.name && student.name.toLowerCase().includes(searchTerm)) ||
+                (student.enroll_no && student.enroll_no.toLowerCase().includes(searchTerm)) ||
+                (student.roll_no && student.roll_no.toLowerCase().includes(searchTerm)) ||
+                (student.uid && student.uid.toLowerCase().includes(searchTerm)) ||
+                (student.section && student.section.toLowerCase().includes(searchTerm))
+            );
+
+            displayStudents(filtered);
+            document.getElementById('totalStudents').textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                document.getElementById('studentsTable').style.display = 'none';
+                document.getElementById('noStudents').style.display = 'block';
+            } else {
+                document.getElementById('studentsTable').style.display = 'block';
+                document.getElementById('noStudents').style.display = 'none';
+            }
+        }
+
+        // Load A2 section on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSection('A2');
+        });
+    </script>
+</body>
+</html>

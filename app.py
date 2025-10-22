@@ -65,8 +65,14 @@ web_handler = WebNFCHandler(socketio)
 def dashboard():
     if 'authenticated' not in session:
         return redirect(url_for('login'))
-    # Redirect to minimal class session view
-    return redirect(url_for('class_session_page'))
+    # Show main menu
+    return render_template('menu.html')
+
+@app.route('/menu')
+def menu_page():
+    if 'authenticated' not in session:
+        return redirect(url_for('login'))
+    return render_template('menu.html')
 
 @app.route('/session')
 def class_session_page():
@@ -79,6 +85,68 @@ def students_page():
     if 'authenticated' not in session:
         return redirect(url_for('login'))
     return render_template('students.html')
+
+@app.route('/students_list')
+def students_list_page():
+    if 'authenticated' not in session:
+        return redirect(url_for('login'))
+    return render_template('students_list.html')
+
+@app.route('/reports')
+def reports_page():
+    if 'authenticated' not in session:
+        return redirect(url_for('login'))
+    return render_template('reports.html')
+
+@app.route('/api/current_user')
+def current_user():
+    if 'authenticated' not in session:
+        return jsonify({'success': False})
+    return jsonify({'success': True, 'username': session.get('username', 'Admin')})
+
+@app.route('/api/section_students')
+def api_section_students():
+    if 'authenticated' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    section = request.args.get('section')
+    if not section:
+        return jsonify({'success': False, 'message': 'Section required'})
+    try:
+        students = db.get_students_by_section_dict(section)
+        return jsonify({'success': True, 'students': students})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/all_students')
+def api_all_students():
+    if 'authenticated' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    try:
+        students = db.get_all_students_dict()
+        return jsonify({'success': True, 'students': students})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/delete_report', methods=['POST'])
+def delete_report():
+    if 'authenticated' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    data = request.get_json() or {}
+    filename = data.get('filename')
+    
+    if not filename:
+        return jsonify({'success': False, 'message': 'Filename required'})
+    
+    try:
+        filepath = os.path.join('static', 'reports', filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            return jsonify({'success': True, 'message': 'Report deleted'})
+        else:
+            return jsonify({'success': False, 'message': 'File not found'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

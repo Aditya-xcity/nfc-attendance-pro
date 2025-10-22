@@ -298,6 +298,36 @@ class ExcelDatabaseManager:
                 print(f"[DEBUG] Error in get_absent_students: {e}")
                 return []
 
+    def get_all_students_dict(self):
+        """Get all students as list of dictionaries"""
+        students_tuples = self.get_all_students()
+        result = []
+        for student in students_tuples:
+            result.append({
+                'name': student[0],
+                'enroll_no': student[1],
+                'roll_no': student[2],
+                'section': student[3],
+                'subject': student[4],
+                'uid': student[5]
+            })
+        return result
+    
+    def get_students_by_section_dict(self, section):
+        """Get students by section as list of dictionaries"""
+        students_tuples = self.get_students_by_section(section)
+        result = []
+        for student in students_tuples:
+            result.append({
+                'name': student[0],
+                'enroll_no': student[1],
+                'roll_no': student[2],
+                'section': student[3],
+                'subject': student[4],
+                'uid': student[5]
+            })
+        return result
+
     def export_students_to_excel(self, filename):
         """Export all students data to Excel file"""
         with self.lock:

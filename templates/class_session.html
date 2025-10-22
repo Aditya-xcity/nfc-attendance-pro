@@ -27,9 +27,12 @@
     .list .item[draggable=true]{cursor:move}
     .list .item[draggable=true]:hover{background:#2a2a4a;transform:scale(1.02)}
     .list{position:relative}
+    .back-btn{position:fixed;top:20px;left:20px;padding:12px 24px;background:rgba(0,212,255,0.2);color:#00d4ff;border:2px solid #00d4ff;border-radius:25px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.3s ease;text-decoration:none;display:inline-block;z-index:100}
+    .back-btn:hover{background:#00d4ff;color:#0a0e27;transform:translateX(-5px)}
   </style>
 </head>
 <body>
+  <a href="/" class="back-btn">← Back to Menu</a>
   <div class="container">
     <div class="header">
       <div class="title">Live Class Session</div>

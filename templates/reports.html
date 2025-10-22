@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Previous Reports - NFC Attendance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27, #162447);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px;
+            background: rgba(15, 15, 35, 0.85);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .header h1 {
+            font-size: 42px;
+            color: #00ff88;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+
+        .header .subtitle {
+            color: #888;
+            font-size: 16px;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 12px 24px;
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+            border: 2px solid #00d4ff;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            z-index: 100;
+        }
+
+        .back-btn:hover {
+            background: #00d4ff;
+            color: #0a0e27;
+            transform: translateX(-5px);
+        }
+
+        .reports-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .filter-section {
+            background: rgba(15, 15, 35, 0.85);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .filter-section input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .filter-section input::placeholder {
+            color: #666;
+        }
+
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .report-card {
+            background: rgba(15, 15, 35, 0.85);
+            border: 2px solid rgba(0, 255, 136, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            border-color: #00ff88;
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+        }
+
+        .report-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .report-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #00d4ff;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+
+        .report-info {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-open {
+            background: #00ff88;
+            color: #0a0e27;
+        }
+
+        .btn-open:hover {
+            background: #00d4ff;
+            transform: scale(1.05);
+        }
+
+        .btn-delete {
+            background: rgba(255, 102, 102, 0.2);
+            color: #ff6666;
+            border: 2px solid #ff6666;
+        }
+
+        .btn-delete:hover {
+            background: #ff6666;
+            color: #fff;
+        }
+
+        .no-reports {
+            text-align: center;
+            padding: 60px;
+            background: rgba(15, 15, 35, 0.85);
+            border-radius: 15px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        .no-reports-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            font-size: 18px;
+        }
+
+        .stats-bar {
+            background: rgba(15, 15, 35, 0.85);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid rgba(0, 255, 136, 0.2);
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #00ff88;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .reports-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-btn">← Back to Menu</a>
+
+    <div class="header">
+        <h1>📄 Previous Reports</h1>
+        <div class="subtitle">View and manage attendance reports</div>
+    </div>
+
+    <div class="reports-container">
+        <!-- Stats bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="totalReports">0</div>
+                <div class="stat-label">Total Reports</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalSize">0 MB</div>
+                <div class="stat-label">Total Size</div>
+            </div>
+        </div>
+
+        <!-- Search filter -->
+        <div class="filter-section">
+            <input type="text" id="searchInput" placeholder="🔍 Search reports by name, section, or date..." onkeyup="filterReports()">
+        </div>
+
+        <!-- Loading state -->
+        <div id="loading" class="loading">
+            Loading reports...
+        </div>
+
+        <!-- Reports grid -->
+        <div id="reportsGrid" class="reports-grid" style="display: none;">
+            <!-- Reports will be dynamically loaded here -->
+        </div>
+
+        <!-- No reports state -->
+        <div id="noReports" class="no-reports" style="display: none;">
+            <div class="no-reports-icon">📋</div>
+            <h2>No Reports Found</h2>
+            <p style="color: #888; margin-top: 10px;">Start a session to generate your first report!</p>
+        </div>
+    </div>
+
+    <script>
+        let allReports = [];
+
+        async function loadReports() {
+            try {
+                const res = await fetch('/api/list_reports');
+                const data = await res.json();
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (!data.success || !data.reports || data.reports.length === 0) {
+                    document.getElementById('noReports').style.display = 'block';
+                    return;
+                }
+
+                allReports = data.reports;
+                
+                // Update stats
+                document.getElementById('totalReports').textContent = data.reports.length;
+                const totalSize = data.reports.reduce((sum, r) => sum + (r.size || 0), 0);
+                document.getElementById('totalSize').textContent = (totalSize / (1024 * 1024)).toFixed(2) + ' MB';
+
+                displayReports(allReports);
+                document.getElementById('reportsGrid').style.display = 'grid';
+
+            } catch (e) {
+                console.error('Error loading reports:', e);
+                document.getElementById('loading').innerHTML = '<p style="color:#ff6666">Error loading reports: ' + e.message + '</p>';
+            }
+        }
+
+        function displayReports(reports) {
+            const grid = document.getElementById('reportsGrid');
+            grid.innerHTML = '';
+
+            reports.forEach(report => {
+                const card = document.createElement('div');
+                card.className = 'report-card';
+
+                const sizeKB = ((report.size || 0) / 1024).toFixed(1);
+                
+                card.innerHTML = `
+                    <div class="report-icon">📄</div>
+                    <div class="report-name">${report.filename}</div>
+                    <div class="report-info">📅 ${report.modified || 'Unknown date'}</div>
+                    <div class="report-info">📦 Size: ${sizeKB} KB</div>
+                    <div class="report-info">📊 Type: ${report.type || 'PDF'}</div>
+                    <div class="report-actions">
+                        <button class="action-btn btn-open" onclick="openReport('${report.filename}')">
+                            📖 Open
+                        </button>
+                        <button class="action-btn btn-delete" onclick="deleteReport('${report.filename}')">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        async function openReport(filename) {
+            try {
+                const res = await fetch('/api/open_report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    // Open PDF in new tab
+                    window.open(`/static/reports/${filename}`, '_blank');
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to open report'));
+                }
+            } catch (e) {
+                alert('Failed to open report: ' + e.message);
+            }
+        }
+
+        async function deleteReport(filename) {
+            if (!confirm(`Are you sure you want to delete "${filename}"?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/delete_report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('Report deleted successfully!');
+                    loadReports(); // Reload the list
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to delete report'));
+                }
+            } catch (e) {
+                alert('Failed to delete report: ' + e.message);
+            }
+        }
+
+        function filterReports() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (!searchTerm) {
+                displayReports(allReports);
+                return;
+            }
+
+            const filtered = allReports.filter(report => 
+                report.filename.toLowerCase().includes(searchTerm) ||
+                (report.modified && report.modified.toLowerCase().includes(searchTerm))
+            );
+
+            displayReports(filtered);
+
+            if (filtered.length === 0) {
+                document.getElementById('reportsGrid').innerHTML = '<div class="no-reports"><p>No reports match your search.</p></div>';
+            }
+        }
+
+        // Load reports on page load
+        window.addEventListener('DOMContentLoaded', loadReports);
+    </script>
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC Attendance System - Main Menu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0a0e27;
+        }
+
+        /* Particles.js background */
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0e27, #1b1b2f);
+            z-index: 0;
+        }
+
+        /* Container */
+        .menu-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 40px;
+            background: rgba(15, 15, 35, 0.85);
+            border-radius: 30px;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(0, 255, 136, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 600px;
+            width: 90%;
+        }
+
+        /* Title */
+        .title {
+            font-size: 48px;
+            font-weight: 700;
+            color: #00ff88;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(0, 255, 136, 0.5); }
+            to { text-shadow: 0 0 30px rgba(0, 255, 136, 0.8); }
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #888;
+            margin-bottom: 50px;
+            letter-spacing: 2px;
+        }
+
+        /* Menu buttons */
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .menu-btn {
+            position: relative;
+            padding: 20px 40px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, #1f4068, #162447);
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .menu-btn:hover::before {
+            left: 100%;
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+            border-color: #00ff88;
+        }
+
+        .menu-btn:active {
+            transform: translateY(-2px);
+        }
+
+        .menu-btn .icon {
+            font-size: 28px;
+        }
+
+        .menu-btn .text {
+            flex: 1;
+            text-align: left;
+        }
+
+        /* Different colors for each button */
+        .btn-session {
+            background: linear-gradient(135deg, #00d4ff, #0084ff);
+        }
+
+        .btn-session:hover {
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-reports {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+        }
+
+        .btn-reports:hover {
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #00ff88, #00d4aa);
+        }
+
+        .btn-add:hover {
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn-list {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+        }
+
+        .btn-list:hover {
+            box-shadow: 0 10px 30px rgba(162, 155, 254, 0.4);
+        }
+
+        /* Footer */
+        .footer {
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .logout-btn {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-size: 14px;
+            color: #ff6666;
+            background: rgba(255, 102, 102, 0.1);
+            border: 1px solid #ff6666;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #ff6666;
+            color: #fff;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .title {
+                font-size: 36px;
+            }
+            .menu-btn {
+                font-size: 18px;
+                padding: 18px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particles.js background -->
+    <div id="particles-js"></div>
+
+    <!-- Main menu container -->
+    <div class="menu-container">
+        <div class="title">🎓 NFC ATTENDANCE</div>
+        <div class="subtitle">MAIN MENU</div>
+
+        <div class="menu-buttons">
+            <!-- Start Session Button -->
+            <a href="/session" class="menu-btn btn-session">
+                <span class="icon">▶️</span>
+                <span class="text">Start Session</span>
+            </a>
+
+            <!-- View Reports Button -->
+            <a href="/reports" class="menu-btn btn-reports">
+                <span class="icon">📄</span>
+                <span class="text">See PDFs</span>
+            </a>
+
+            <!-- Add New Student Button -->
+            <a href="/students" class="menu-btn btn-add">
+                <span class="icon">➕</span>
+                <span class="text">Add New</span>
+            </a>
+
+            <!-- View Students List Button -->
+            <a href="/students_list" class="menu-btn btn-list">
+                <span class="icon">📋</span>
+                <span class="text">Show List</span>
+            </a>
+        </div>
+
+        <div class="footer">
+            Welcome, <strong id="username">Admin</strong>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- Particles.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+    <!-- Particles.js config -->
+    <script>
+        // Initialize Particles.js
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: '#00ff88' },
+                shape: { type: 'circle' },
+                opacity: { value: 0.3, random: false },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: '#00ff88', opacity: 0.2, width: 1 },
+                move: { enable: true, speed: 3, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                modes: { grab: { distance: 200, line_linked: { opacity: 0.35 } }, push: { particles_nb: 4 } }
+            },
+            retina_detect: true
+        });
+
+        // Display username
+        fetch('/api/current_user')
+            .then(r => r.json())
+            .then(d => {
+                if (d.username) {
+                    document.getElementById('username').textContent = d.username;
+                }
+            })
+            .catch(() => {});
+
+        // Logout function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = '/logout';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -87,11 +87,16 @@ async function refreshLists() {
     document.getElementById('statPresent').textContent = data.present;
     document.getElementById('statAbsent').textContent = data.absent;
 
-    // Update last scan and capture photo
+    // Update last scan and capture photo (only once per student)
     if (data.last_scan && data.last_scan.name) {
-      document.getElementById('lastScan').textContent = data.last_scan.name;
-      // Capture photo for the scanned student
-      capturePhotoForStudent(data.last_scan.name);
+      const lastScannedName = data.last_scan.name;
+      document.getElementById('lastScan').textContent = lastScannedName;
+      
+      // Only capture if this is a NEW student (prevent duplicate captures)
+      if (lastScannedName !== window.lastCapturedStudent) {
+        window.lastCapturedStudent = lastScannedName;
+        capturePhotoWithCountdown(lastScannedName);
+      }
     }
 
     // Store full data for drag operations
@@ -302,6 +307,11 @@ async function stopSession() {
       // Show success and PDF info
       alert(`Session stopped successfully!\n\nStats:\nTotal: ${data.stats.total}\nPresent: ${data.stats.present}\nAbsent: ${data.stats.absent}\n\nPDF: ${data.pdf_file}`);
 
+      // Auto-open the PDF in new tab
+      if (data.pdf_file) {
+        window.open(`/static/reports/${data.pdf_file}`, '_blank');
+      }
+
       // Refresh reports list
       await refreshReportsList();
 
@@ -394,6 +404,29 @@ async function openReport(filename) {
   }
 }
 
+async function capturePhotoWithCountdown(studentName) {
+  // Show countdown: 3... 2... 1... Smile!
+  const countdownValues = ['3', '2', '1', 'Smile! 📸'];
+  const photoInfo = document.getElementById('photoInfo');
+  const img = document.getElementById('cameraPhoto');
+  
+  // Hide photo, show countdown placeholder
+  img.style.display = 'none';
+  photoInfo.style.display = 'flex';
+  
+  for (let i = 0; i < countdownValues.length; i++) {
+    const count = countdownValues[i];
+    updateCameraStatus(count, false);
+    photoInfo.innerHTML = `<div style="font-size:48px;font-weight:bold;color:#00ff88">${count}</div>`;
+    
+    // Wait 1 second between counts
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  
+  // Now capture the photo
+  await capturePhotoForStudent(studentName);
+}
+
 async function capturePhotoForStudent(studentName) {
   try {
     const res = await fetch('/api/capture_photo', {
@@ -425,6 +458,7 @@ function displayCapturedPhoto(photoUrl, studentName) {
   img.src = photoUrl + '?t=' + new Date().getTime();  // Add cache buster
   img.style.display = 'block';
   photoInfo.style.display = 'none';
+  photoInfo.innerHTML = '📷 Waiting for card scan...';
   
   // Update status
   updateCameraStatus(`📷 ${studentName}`, false);
@@ -434,6 +468,7 @@ function displayCapturedPhoto(photoUrl, studentName) {
   window.photoHideTimeout = setTimeout(() => {
     img.style.display = 'none';
     photoInfo.style.display = 'flex';
+    photoInfo.innerHTML = '📷 Waiting for card scan...';
     updateCameraStatus('Ready', false);
   }, 30000);
 }
