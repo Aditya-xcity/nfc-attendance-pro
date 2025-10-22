@@ -3,3 +3,5 @@ __pycache__/
 *.db
 *.xlsx
 tempCodeRunnerFile.py
+static/photos/
+static/reports/

@@ -24,6 +24,9 @@
     .big-now{font-size:22px;font-weight:800;color:#00ff88}
     .stats{display:flex;gap:10px}
     .stat{background:#1a1a2e;border:1px solid #333355;border-radius:8px;padding:8px 12px}
+    .list .item[draggable=true]{cursor:move}
+    .list .item[draggable=true]:hover{background:#2a2a4a;transform:scale(1.02)}
+    .list{position:relative}
   </style>
 </head>
 <body>
@@ -61,12 +64,38 @@
       </div>
     </div>
 
+    <!-- Reports Section -->
+    <div id="reportsSection" style="margin-top:20px;padding:12px;background:#1a1a2e;border:1px solid #333355;border-radius:10px;display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="margin:0;color:#00d4ff;font-size:14px">📄 Saved Reports</h3>
+        <button class="btn" onclick="refreshReportsList()" style="background:#00d4ff;color:#0f0f23;padding:6px 12px;font-size:12px">Refresh</button>
+      </div>
+      <div id="reportsList" style="max-height:250px;overflow-y:auto;"></div>
+    </div>
+
     <style>
       @keyframes pulse {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.5; }
       }
     </style>
+
+    <!-- Camera Display Section -->
+    <div style="margin-top:20px;background:#1a1a2e;border:1px solid #333355;border-radius:10px;overflow:hidden">
+      <div style="padding:12px;border-bottom:1px solid #333355;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0;color:#00d4ff;font-size:14px">📷 Camera Feed</h3>
+        <span id="cameraStatus" style="color:#888;font-size:12px">Initializing...</span>
+      </div>
+      <div id="cameraContainer" style="background:#000;position:relative;padding-top:56.25%;margin:0;overflow:hidden;border-bottom:1px solid #333355">
+        <img id="cameraPhoto" src="" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:none" />
+        <div id="photoInfo" style="position:absolute;top:0;left:0;right:0;bottom:0;background:#000;display:flex;align-items:center;justify-content:center">
+          <div style="color:#666;text-align:center">
+            <div style="font-size:12px">📷 Waiting for card scan...</div>
+            <div style="font-size:11px;margin-top:5px">Photo will appear here</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="grid">
       <div class="panel">

@@ -1,0 +1,12 @@
+{
+  "uid": "77889900",
+  "name": "Jane Smith",
+  "data": {
+    "student_id": "B2001",
+    "section": "B2",
+    "subject": "General"
+  },
+  "created_at": "2025-10-22T00:17:32.306545",
+  "last_read": "2025-10-22T00:17:33.826540",
+  "read_count": 1
+}

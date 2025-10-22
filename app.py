@@ -9,6 +9,7 @@ from datetime import datetime
 from config import Config
 from database import db
 from models import session_mgr, voice_feedback
+from utils.webcam_capture import get_webcam
 # Try to use Broadcom scanner first, fallback to regular scanner
 try:
     from nfc.broadcom_scanner import nfc_scan_loop_web
@@ -248,6 +249,130 @@ def read_section_excel(section):
         print(f"[DEBUG] Error reading from database: {e}")
     
     return roster
+
+@app.route('/api/remove_attendance', methods=['POST'])
+def remove_attendance():
+    """Remove a student from attendance (right to left drag)"""
+    if 'authenticated' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    if not session_mgr.current_session:
+        return jsonify({'success': False, 'message': 'No active session'})
+    
+    try:
+        data = request.get_json() or {}
+        section = data.get('section')
+        name = data.get('name')
+        
+        if not section or not name:
+            return jsonify({'success': False, 'message': 'Missing section or name'})
+        
+        # Get the roster to find the student's UID
+        roster = read_section_excel(section)
+        student = None
+        for r in roster:
+            if r.get('name') == name:
+                student = r
+                break
+        
+        if not student or not student.get('uid'):
+            return jsonify({'success': False, 'message': 'Student not found in roster'})
+        
+        uid = student['uid'].upper()
+        
+        # Check if currently marked present
+        present_uids = db.get_present_uids_today_by_section(section)
+        if uid not in {u.upper() for u in present_uids}:
+            return jsonify({'success': False, 'message': 'Student not in attendance'})
+        
+        # Remove attendance records for this UID today
+        try:
+            import pandas as pd
+            today = (datetime.utcnow() + Config.TIMEZONE_OFFSET).strftime("%Y-%m-%d")
+            df_att = pd.read_excel('data/attendance.xlsx', sheet_name='Attendance', dtype=str)
+            df_att = df_att.fillna('')
+            
+            # Remove all attendance records for this UID today
+            df_att = df_att[~((df_att['Student UID'].astype(str).str.strip().str.upper() == uid) & 
+                             (df_att['Date'].astype(str).str.strip() == today))]
+            
+            df_att.to_excel('data/attendance.xlsx', index=False, sheet_name='Attendance')
+            
+            # Remove from session tracking
+            session_mgr.scanned_uids.discard(uid)
+            
+            # Update web handler
+            web_handler.update_status(f"❌ {name} removed from attendance", warning=True)
+            web_handler.update_dashboard()
+            
+            print(f"[DEBUG] Removed attendance: {name} (UID: {uid})")
+            
+            return jsonify({
+                'success': True,
+                'message': f'{name} removed from attendance'
+            })
+        except Exception as e:
+            print(f"[DEBUG] Error removing attendance: {e}")
+            return jsonify({'success': False, 'message': str(e)})
+    
+    except Exception as e:
+        print(f"[DEBUG] Error removing attendance: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/mark_present_manual', methods=['POST'])
+def mark_present_manual():
+    """Manually mark a student as present (drag and drop)"""
+    if 'authenticated' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    if not session_mgr.current_session:
+        return jsonify({'success': False, 'message': 'No active session'})
+    
+    try:
+        data = request.get_json() or {}
+        section = data.get('section')
+        name = data.get('name')
+        roll_no = data.get('roll_no')
+        
+        if not section or not name:
+            return jsonify({'success': False, 'message': 'Missing section or name'})
+        
+        # Get the roster to find the student's UID
+        roster = read_section_excel(section)
+        student = None
+        for r in roster:
+            if r.get('name') == name:
+                student = r
+                break
+        
+        if not student or not student.get('uid'):
+            return jsonify({'success': False, 'message': 'Student not found in roster'})
+        
+        uid = student['uid'].upper()
+        
+        # Check if already marked present
+        present_uids = db.get_present_uids_today_by_section(section)
+        if uid in {u.upper() for u in present_uids}:
+            return jsonify({'success': False, 'message': 'Already marked present'})
+        
+        # Log attendance
+        db.log_attendance(uid)
+        session_mgr.scanned_uids.add(uid)
+        
+        # Update web handler
+        web_handler.update_status(f"✅ Manual: {name} marked present", success=True)
+        web_handler.add_recent_attendance(name)
+        web_handler.update_dashboard()
+        
+        print(f"[DEBUG] Manually marked present: {name} (UID: {uid})")
+        
+        return jsonify({
+            'success': True,
+            'message': f'{name} marked as present'
+        })
+    except Exception as e:
+        print(f"[DEBUG] Error marking present: {e}")
+        return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/api/session_lists')
 def api_session_lists():
@@ -777,6 +902,168 @@ def export_attendance():
         'filename': filename if success else None
     })
 
+@app.route('/api/list_reports')
+def list_reports():
+    """List all generated reports in static/reports directory."""
+    if 'authenticated' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    try:
+        import os
+        reports_dir = 'static/reports'
+        os.makedirs(reports_dir, exist_ok=True)
+        
+        reports = []
+        for filename in os.listdir(reports_dir):
+            filepath = os.path.join(reports_dir, filename)
+            if os.path.isfile(filepath):
+                # Get file size and modification time
+                size = os.path.getsize(filepath)
+                mtime = os.path.getmtime(filepath)
+                mod_time = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S')
+                
+                # Determine file type
+                if filename.endswith('.pdf'):
+                    file_type = 'PDF'
+                elif filename.endswith('.xlsx'):
+                    file_type = 'Excel'
+                elif filename.endswith('.txt'):
+                    file_type = 'Text'
+                else:
+                    file_type = 'File'
+                
+                reports.append({
+                    'filename': filename,
+                    'type': file_type,
+                    'size': size,
+                    'modified': mod_time
+                })
+        
+        # Sort by modification time (newest first)
+        reports.sort(key=lambda x: x['modified'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'reports': reports
+        })
+    except Exception as e:
+        print(f"[DEBUG] Error listing reports: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/open_report', methods=['POST'])
+def open_report():
+    """Open a report file with the system default application."""
+    if 'authenticated' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    try:
+        data = request.get_json() or {}
+        filename = data.get('filename')
+        
+        if not filename:
+            return jsonify({'success': False, 'message': 'Filename required'})
+        
+        # Security: prevent directory traversal
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return jsonify({'success': False, 'message': 'Invalid filename'})
+        
+        filepath = os.path.join('static/reports', filename)
+        
+        # Check if file exists
+        if not os.path.exists(filepath):
+            return jsonify({'success': False, 'message': 'File not found'})
+        
+        # Get absolute path
+        abs_filepath = os.path.abspath(filepath)
+        
+        # Open file with system default application
+        import platform
+        import subprocess
+        
+        try:
+            if platform.system() == 'Windows':
+                os.startfile(abs_filepath)
+            elif platform.system() == 'Darwin':  # macOS
+                subprocess.Popen(['open', abs_filepath])
+            else:  # Linux and others
+                subprocess.Popen(['xdg-open', abs_filepath])
+            
+            return jsonify({
+                'success': True,
+                'message': f'Opening {filename}...'
+            })
+        except Exception as e:
+            print(f"[DEBUG] Failed to open file: {e}")
+            return jsonify({
+                'success': False,
+                'message': f'Could not open file: {str(e)}'
+            })
+    
+    except Exception as e:
+        print(f"[DEBUG] Error opening report: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/capture_photo', methods=['POST'])
+def capture_photo():
+    """Capture a photo when a card is scanned."""
+    if 'authenticated' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    try:
+        data = request.get_json() or {}
+        student_name = data.get('student_name', 'Unknown')
+        
+        # Get webcam instance
+        webcam = get_webcam()
+        
+        if not webcam.is_initialized:
+            return jsonify({
+                'success': False,
+                'message': 'Webcam not available',
+                'camera_disabled': True
+            })
+        
+        # Capture photo
+        filename = webcam.capture_photo(student_name)
+        
+        if filename:
+            photo_url = webcam.get_photo_url(filename)
+            return jsonify({
+                'success': True,
+                'message': f'Photo captured for {student_name}',
+                'photo_url': photo_url,
+                'filename': filename
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to capture photo'
+            })
+    
+    except Exception as e:
+        print(f"[DEBUG] Photo capture error: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/photo_stats')
+def photo_stats():
+    """Get statistics about stored photos."""
+    if 'authenticated' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    try:
+        webcam = get_webcam()
+        stats = webcam.get_storage_stats()
+        
+        if 'error' in stats:
+            return jsonify({'success': False, 'message': stats['error']})
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
 def ensure_section_excels():
     import os
     os.makedirs('data/sections', exist_ok=True)
@@ -860,12 +1147,12 @@ def seed_section_excels():
     return True
 
 def generate_session_pdf(session_data, present_students, absent_students, filename):
-    """Generate a professional PDF report for the session."""
+    """Generate a professional PDF report with student photos."""
     try:
         from reportlab.lib.pagesizes import letter, A4
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib.units import inch
-        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image
         from reportlab.lib import colors
         from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
         from datetime import datetime
@@ -918,32 +1205,64 @@ def generate_session_pdf(session_data, present_students, absent_students, filena
         <b>Absent:</b> {len(absent_students)} ({100-attendance_rate:.1f}%)
         """
         elements.append(Paragraph(stats_text, info_style))
-        elements.append(Spacer(1, 0.2*inch))
+        elements.append(Spacer(1, 0.3*inch))
         
-        # Present Students Table
+        # Present Students with Photos
         elements.append(Paragraph('<b>PRESENT STUDENTS</b>', styles['Heading2']))
         if present_students:
-            present_data = [['#', 'Name', 'Enrollment No', 'Roll No']]
-            for i, student in enumerate(present_students, 1):
-                present_data.append([str(i), student[0], student[1], student[2]])
-            
-            present_table = Table(present_data, colWidths=[0.5*inch, 2.5*inch, 1.5*inch, 0.8*inch])
-            present_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0066cc')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f0f0')])
-            ]))
-            elements.append(present_table)
+            for idx, student in enumerate(present_students):
+                # Student name and info
+                student_name = student[0]
+                student_enroll = student[1]
+                student_roll = student[2]
+                
+                student_info = f"<b>{idx + 1}. {student_name}</b><br/>Enrollment: {student_enroll} | Roll: {student_roll}"
+                
+                # Try to find and add photo
+                photo_found = False
+                if os.path.exists('static/photos'):
+                    # Search for most recent photo with this student's name
+                    for filename_photo in sorted(os.listdir('static/photos'), reverse=True):
+                        if student_name.upper().replace(' ', '_') in filename_photo.upper() and filename_photo.endswith('.jpg'):
+                            try:
+                                photo_path = os.path.join('static/photos', filename_photo)
+                                photo_img = Image(photo_path, width=1.5*inch, height=1.125*inch)
+                                
+                                # Create table with info and photo
+                                photo_table = Table([
+                                    [Paragraph(student_info, info_style), photo_img]
+                                ], colWidths=[2.5*inch, 1.8*inch])
+                                photo_table.setStyle(TableStyle([
+                                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                                    ('LEFTPADDING', (0, 0), (0, 0), 10),
+                                    ('RIGHTPADDING', (1, 0), (1, 0), 10),
+                                    ('BORDER', (0, 0), (-1, -1), 1, colors.grey)
+                                ]))
+                                elements.append(photo_table)
+                                elements.append(Spacer(1, 0.15*inch))
+                                photo_found = True
+                                break
+                            except Exception as e:
+                                print(f"[WARN] Could not add photo for {student_name}: {e}")
+                
+                # If no photo found, just add student info
+                if not photo_found:
+                    elements.append(Paragraph(student_info, info_style))
+                    elements.append(Spacer(1, 0.15*inch))
+                
+                # Add page break if too many students
+                if (idx + 1) % 5 == 0 and idx + 1 < len(present_students):
+                    elements.append(PageBreak())
+                    elements.append(Paragraph('<b>PRESENT STUDENTS (Continued)</b>', styles['Heading2']))
+                    elements.append(Spacer(1, 0.2*inch))
         else:
             elements.append(Paragraph('<i>No students present</i>', styles['Normal']))
         
         elements.append(Spacer(1, 0.3*inch))
+        
+        # Add new page for absent students
+        if absent_students:
+            elements.append(PageBreak())
         
         # Absent Students Table
         elements.append(Paragraph('<b>ABSENT STUDENTS</b>', styles['Heading2']))

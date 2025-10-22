@@ -1,7 +1,25 @@
-pyscard==2.0.4
-pyttsx3==2.90
-flask==2.3.2
-flask-socketio==5.3.5
-pandas==2.0.3
-openpyxl==3.1.2
-reportlab==4.0.4
+# Core dependencies
+Flask>=2.3.0
+Flask-SocketIO>=5.3.0
+python-socketio>=5.9.0
+python-engineio>=4.7.0
+
+# NFC and smartcard (try wheel first)
+pyscard>=2.0.7; python_version < '3.13'
+
+# Audio feedback
+pyttsx3>=2.90
+
+# Report generation
+reportlab>=4.0.0
+
+# Data handling
+pandas>=2.0.0
+openpyxl>=3.1.0
+
+# Camera/Webcam
+opencv-python>=4.8.0
+Pillow>=10.0.0
+
+# Utilities
+python-dotenv>=1.0.0
