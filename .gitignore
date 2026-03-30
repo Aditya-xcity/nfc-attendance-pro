@@ -1,7 +1,37 @@
+# Python cache
 __pycache__/
 *.pyc
+
+# Database / data files
 *.db
+*.sqlite3
+
+# Excel / reports
 *.xlsx
+
+# Temp files
+*.tmp
+*.temp
+*.log
+*.bak
+*.swp
+*.swo
+*~
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python virtual environments
+venv/
+venv*/
+env/
+.env/
+
+# Your custom ignores
 tempCodeRunnerFile.py
 static/photos/
 static/reports/
