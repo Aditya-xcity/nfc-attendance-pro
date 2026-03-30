@@ -1,4 +1,4 @@
-# app.py - Flask web application for NFC Attendance Pro
+   # app.py - Flask web application for NFC Attendance Pro
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_socketio import SocketIO, emit
 from threading import Thread
@@ -15,7 +15,7 @@ try:
     from nfc.broadcom_scanner import nfc_scan_loop_web
     print("[INFO] Using Broadcom-compatible NFC scanner")
 except ImportError:
-    from nfc.web_scanner import nfc_scan_loop_web
+    from nfc.broadcom_scanner  import nfc_scan_loop_web
     print("[INFO] Using standard NFC scanner")
 
 app = Flask(__name__)
